@@ -20,6 +20,9 @@ import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithText
 import androidx.navigation.Navigation.findNavController
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
@@ -50,7 +53,11 @@ class PlantDetailFragmentTest {
 
     @Rule
     @JvmField
-    val activityTestRule = ActivityScenarioRule(GardenActivity::class.java)
+    val composeTestRule = createAndroidComposeRule<GardenActivity>()
+
+//    @Rule
+//    @JvmField
+//    val activityTestRule = ActivityScenarioRule(GardenActivity::class.java)
 
     // Note that keeping these references is only safe if the activity is not recreated.
     private lateinit var activity: ComponentActivity
@@ -59,7 +66,14 @@ class PlantDetailFragmentTest {
     fun jumpToPlantDetailFragment() {
         populateDatabase()
 
-        activityTestRule.scenario.onActivity { gardenActivity ->
+//        activityTestRule.scenario.onActivity { gardenActivity ->
+//            activity = gardenActivity
+//
+//            val bundle = Bundle().apply { putString("plantId", "malus-pumila") }
+//            findNavController(activity, R.id.nav_host).navigate(R.id.plant_detail_fragment, bundle)
+//        }
+
+        composeTestRule.activityRule.scenario.onActivity { gardenActivity ->
             activity = gardenActivity
 
             val bundle = Bundle().apply { putString("plantId", "malus-pumila") }
@@ -69,8 +83,9 @@ class PlantDetailFragmentTest {
 
     @Test
     fun testPlantName() {
-        onView(ViewMatchers.withText("Apple"))
-            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+//        onView(ViewMatchers.withText("Apple"))
+//            .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+        composeTestRule.onNodeWithText("Apple").assertIsDisplayed()
     }
 
     @Test
@@ -80,20 +95,20 @@ class PlantDetailFragmentTest {
         Intents.init()
         onView(withId(R.id.action_share)).perform(click())
         intended(
-            chooser(
-                allOf(
-                    hasAction(Intent.ACTION_SEND),
-                    hasType("text/plain"),
-                    hasExtra(Intent.EXTRA_TEXT, shareText)
+                chooser(
+                        allOf(
+                                hasAction(Intent.ACTION_SEND),
+                                hasType("text/plain"),
+                                hasExtra(Intent.EXTRA_TEXT, shareText)
+                        )
                 )
-            )
         )
         Intents.release()
 
         // dismiss the Share Dialog
         InstrumentationRegistry.getInstrumentation()
-            .uiAutomation
-            .performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
+                .uiAutomation
+                .performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
     }
 
     // TODO: This workaround is needed due to the real database being used in tests.
@@ -102,7 +117,7 @@ class PlantDetailFragmentTest {
     //  dependency injection best practices in place.
     private fun populateDatabase() {
         val request = TestListenableWorkerBuilder<SeedDatabaseWorker>(
-            InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+                InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
         ).build()
         runBlocking {
             request.doWork()
